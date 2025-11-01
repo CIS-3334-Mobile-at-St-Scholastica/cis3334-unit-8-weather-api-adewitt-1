@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
       "Smoke": "graphics/fog.png",
     };
 
-    final _imagePath = _imageMap[weatherMain] ?? 'graphics/default.png';
+    final _imagePath = _imageMap[weatherMain] ?? 'graphics/sun.png';
     return Image(image: AssetImage(_imagePath));
   }
 
