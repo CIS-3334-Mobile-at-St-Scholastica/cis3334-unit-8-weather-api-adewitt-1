@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'services/weather_service.dart';
+import 'models/weather_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,14 +31,43 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Widget weatherTile (int position) {
-    print ("Inside weatherTile and setting up tile for positon ${position}");
+
+  late Future<List<DailyForecast>> futureWeatherForecasts;
+
+  @override
+  void initState() {
+    super.initState();
+    futureWeatherForecasts = fetchWeather();
+  }
+
+  Widget weatherTile (DailyForecast dailyForecast) {
+    // print ("Inside weatherTile and setting up tile for positon ${dailyForecast}");
     return ListTile(
-      leading: Image(image: AssetImage('graphics/sun.png')),
-      title: Text("Title Here"),
-      subtitle: Text("Subtitle Here"),
+      leading: weatherImage(dailyForecast.weather[0].main),
+      title: Text('Temperature will be ${dailyForecast.main.temp}'),
+      subtitle: Text("${dailyForecast.weather[0].main}: ${dailyForecast.weather[0].description}. High: ${dailyForecast.main.tempMax} Low: ${dailyForecast.main.tempMin}"),
+      trailing: Text("Forecast Time: ${dailyForecast.dtTxt.toLocal()}"),
     );
   }
+
+  Widget weatherImage (String weatherMain) {
+    final _imageMap = {
+      "Clear": "graphics/sun.png",
+      "Clouds": "graphics/cloud.png",
+      "Thunderstorm": "graphics/rain.png",
+      "Drizzle": "graphics/drizzle.png",
+      "Rain": "graphics/rain.png",
+      "Snow": "graphics/snow.png",
+      "Fog": "graphics/fog.png",
+      "Mist": "graphics/fog.png",
+      "Haze": "graphics/fog.png",
+      "Smoke": "graphics/fog.png",
+    };
+
+    final _imagePath = _imageMap[weatherMain] ?? 'graphics/default.png';
+    return Image(image: AssetImage(_imagePath));
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +75,24 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ListView.builder(
-        itemCount: 4,
-        itemBuilder: (BuildContext context, int position) {
-          return Card(
-            child: weatherTile(position),
+      body: FutureBuilder(
+        future: futureWeatherForecasts,
+        builder: (context, asyncSnapshot) {
+          if (asyncSnapshot.data == null ||
+              asyncSnapshot.connectionState == ConnectionState.none) {
+            print('project snapshot data is: ${asyncSnapshot.data}');
+            return Container();
+          }
+          List<DailyForecast> myForecastList = asyncSnapshot.data!;
+          return ListView.builder(
+            itemCount: myForecastList.length,
+            itemBuilder: (BuildContext context, int position) {
+              return Card(
+                child: weatherTile(myForecastList[position]),
+              );
+            },
           );
-        },
+        }
       ),
       // This trailing comma makes auto-formatting nicer for build methods.
     );
